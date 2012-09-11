@@ -6,5 +6,5 @@ import graphito.graph.Edge;
 import org.jgrapht.Graph;
 
 interface Layouter {
-	void layout(Graph<V extends Vertex, E extends Edge> graph);
+	void layout(Graph<? extends Vertex, ? extends Edge> graph);
 }
