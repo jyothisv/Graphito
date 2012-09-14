@@ -27,6 +27,7 @@ public class Edge implements VertexListener, Shape {
 	private Vertex source, dest;
 	private Line2D.Double line;
 	private EventListenerList edgeEventList;
+	private boolean enabled;
 
 	public static class Factory<V extends Vertex> implements EdgeFactory<V,Edge> {
 		private int count;
@@ -43,9 +44,16 @@ public class Edge implements VertexListener, Shape {
 
 	@Override
 	public String toString() {
-		return String.format("Edge(%s: (%s, %s))", id, source.getId(), dest.getId());
+		return String.format("Edge(%s: (%s, %s))", id, source, dest);
 	}
 
+	public final boolean isEnabled() {
+		return enabled;
+	}
+
+	public final void setEnabled(boolean b) {
+		enabled = b;
+	}
 
 	private final void fireEdgeStyleChangeEvent() {
 		EdgeStyleChangeEvent ev = new EdgeStyleChangeEvent(this);
@@ -69,7 +77,7 @@ public class Edge implements VertexListener, Shape {
 		edgeEventList.remove(EdgeListener.class, v);
 	}
 
-	public Edge(String id, Vertex source, Vertex dest) {
+	protected Edge(String id, Vertex source, Vertex dest) {
 		this.id = id;
 		strokeColor = Color.BLACK;
 		this.source = source;
@@ -81,6 +89,7 @@ public class Edge implements VertexListener, Shape {
 			                     dest.getY() + dest.getBounds().getHeight()/2.0);
 		source.addVertexListener(this);
 		dest.addVertexListener(this);
+		enabled = true;
 	}
 
 	public final String getId() {

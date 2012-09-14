@@ -31,7 +31,7 @@ public class ForceEnergyLayout implements Layouter {
 
     private double repulsion(double k, Vector2D x)
     {
-        return -k*k/(x.mod());
+        return -k*k/(x.mod()) * 10.0;
     }
 
     // private Vertex[] adjacent(Graph<Vertex, Edge> graph, Vertex v)
@@ -174,10 +174,30 @@ public class ForceEnergyLayout implements Layouter {
         }
             
 
-        // Change the vertex positions
+        double MinX = 1.0/0, MinY = 1.0/0;
+        // double MaxX = 1.0/0, MaxY = 1.0/0;
+        // Determine MinX, MinY, MaxX and MaxY
+        Vector2D p;
+        for (V v: verts) {
+            p = pos.get(v);
+            if (p.getX() < MinX)
+                MinX = p.getX();
+            // else if (p.getX() > MaxX)
+            //     MaxX = p.getX();
 
+            if (p.getY() < MinY)
+                MinY = p.getY();
+            // else if (p.getY() > MaxY)
+            //     MaxY = p.getY();
+        }
+                
+        
+        // Change the vertex positions
+        MinX = Math.max(0.0, -MinX);
+        MinY = Math.max(0.0, -MinY);
+        
         for (V v : verts) {           
-            v.setPos(pos.get(v).getX(), pos.get(v).getY(), 1.0);
+            v.setPos(pos.get(v).getX() + MinX, pos.get(v).getY() + MinY, 3.0);
         }
         
 

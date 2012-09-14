@@ -66,21 +66,25 @@ public class SimpleCanvas implements Canvas {
 
 		Graphics2D gpcs = (Graphics2D) img.getGraphics();
 		gpcs.scale(windowSize.getWidth()/canvasSize.getWidth(), 
-			       windowSize.getHeight()/canvasSize.getHeight());
+			windowSize.getHeight()/canvasSize.getHeight());
 
 		gpcs.setColor(Color.WHITE);
 		gpcs.fillRect(0, 0, (int) canvasSize.getWidth(), (int) canvasSize.getHeight());
 
 		for (Edge e : graph.edgeSet()) {
-			gpcs.setColor(e.getStrokeColor());
-			gpcs.draw(e);
+			if(e.isEnabled()) {
+				gpcs.setColor(e.getStrokeColor());
+				gpcs.draw(e);
+			}
 		}
 
 		for (Vertex v: graph.vertexSet()) {
-			gpcs.setColor(v.getStrokeColor());
-			gpcs.draw(v);
-			gpcs.setColor(v.getFillColor());
-			gpcs.fill(v);
+			if(v.isEnabled()) {
+				gpcs.setColor(v.getStrokeColor());
+				gpcs.draw(v);
+				gpcs.setColor(v.getFillColor());
+				gpcs.fill(v);
+			}
 		}
 
 		return img;

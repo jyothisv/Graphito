@@ -29,6 +29,7 @@ import graphito.algorithm.DemoAlgorithm;
 import graphito.visualizer.GraphVisualizer;
 import graphito.visualizer.SimpleCanvas;
 import graphito.visualizer.Canvas;
+import graphito.graph.layout.ForceEnergyLayout;
 
 public class Graphito extends JFrame {
 
@@ -57,6 +58,8 @@ public class Graphito extends JFrame {
 			if(Graphito.this.beatTimer.isRunning()) {
 				Graphito.this.beatTimer.stop();
 				Graphito.this.singleStep.setEnabled(true);
+				Graphito.this.startRun.setEnabled(true);
+				Graphito.this.stopRun.setEnabled(false);
 			}
 		}
 	}
@@ -64,22 +67,45 @@ public class Graphito extends JFrame {
 	private class BeatListener implements ActionListener {
 		@Override
 		public void actionPerformed(ActionEvent e) {
+			ArrayList<Algorithm<? extends Vertex, ? extends Edge>> finLst = new ArrayList<>();
+
 			for (Algorithm<? extends Vertex, ? extends Edge> a: Graphito.this.algs) {
-				a.executeSingleStep();
+				if(a.executeSingleStep() == false) {
+					finLst.add(a);
+				}
+			}
+
+			for (Algorithm<? extends Vertex, ? extends Edge> a : finLst) {
+				Graphito.this.algs.remove(a);
 			}
 
 			Graphito.this.gv.updateComposite();
+
+			if(Graphito.this.algs.isEmpty()) {
+				Graphito.this.beatTimer.stop();
+				Graphito.this.singleStep.setEnabled(true);
+				Graphito.this.startRun.setEnabled(true);
+				Graphito.this.stopRun.setEnabled(false);
+			}
 		}
 	}
 
 	private class SingleStepListener implements ActionListener {
 		@Override
 		public void actionPerformed(ActionEvent e) {
+			ArrayList<Algorithm<? extends Vertex, ? extends Edge>> finLst = new ArrayList<>();
+
 			for (Algorithm<? extends Vertex, ? extends Edge> a: Graphito.this.algs) {
-				a.executeSingleStep();
+				if(a.executeSingleStep() == false) {
+					finLst.add(a);
+				}
 			}
 
-			Graphito.this.gv.updateComposite();	
+			for (Algorithm<? extends Vertex, ? extends Edge> a : finLst) {
+				Graphito.this.algs.remove(a);
+			}
+
+			Graphito.this.gv.updateComposite();
 		}
 	}
 
@@ -139,10 +165,12 @@ public class Graphito extends JFrame {
 		gen.generateGraph(g, vf, null);
 
 		// Do Layout
-		Random r = new Random();
-		for (Vertex v: g.vertexSet()) {
-			v.setPos(r.nextInt(800), r.nextInt(600), 10);
-		}
+		ForceEnergyLayout fel = new ForceEnergyLayout();
+		fel.layout(g);
+		// Random r = new Random();
+		// for (Vertex v: g.vertexSet()) {
+		// 	v.setPos(r.nextInt(800), r.nextInt(600), 5);
+		// }
 
 		Canvas c = new SimpleCanvas();
 		c.setGraph(g);

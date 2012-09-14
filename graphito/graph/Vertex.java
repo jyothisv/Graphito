@@ -23,6 +23,7 @@ public class Vertex implements Shape {
 	private Color fillColor;
 	private Color strokeColor;
 	private EventListenerList vertexEventList;
+	private boolean enabled;
 
 	public static class Factory implements VertexFactory<Vertex> {
 		private int count;
@@ -35,6 +36,14 @@ public class Vertex implements Shape {
 		public Vertex createVertex() {
 			return new Vertex(String.format("v%d", count++));
 		}
+	}
+
+	public final boolean isEnabled() {
+		return enabled;
+	}
+
+	public final void setEnabled(boolean b) {
+		enabled = b;
 	}
 
 	@Override
@@ -65,12 +74,13 @@ public class Vertex implements Shape {
 		vertexEventList.remove(VertexListener.class, v);
 	}
 
-	public Vertex(String id) {
+	protected Vertex(String id) {
 		this.id = id;
 		this.circle = new Ellipse2D.Double();
 		fillColor = Color.WHITE;
 		strokeColor = Color.BLACK;
 		vertexEventList = new EventListenerList();
+		enabled = true;
 	}
 
 	public final String getId() {
