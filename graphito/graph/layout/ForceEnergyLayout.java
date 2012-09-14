@@ -8,21 +8,23 @@ import java.util.Random;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.HashMap;
-// import graphito.graph.layout.Stopwatch;
+import graphito.graph.layout.Stopwatch;
 
 
-public class ForceLayoutMod {
-    private static double HEIGHT = 600;
-    private static double WIDTH = 800;
+public class ForceEnergyLayout {
+    private static double HEIGHT = 1000;
+    private static double WIDTH = 1000;
     private static double dampen = 0.9;
 
     private static double attraction(double k, Vector2D x)
     {
-        return x.mod2()/k;
+        return x.mod2()/(k*k);
+        // return 0;
     }
 
     private static double repulsion(double k, Vector2D x)
     {
+        
         return -k*k/(x.mod());
     }
 
@@ -59,7 +61,14 @@ public class ForceLayoutMod {
             step *= dampen;
         }
         // step *= dampen;
-        return step;
+
+        // if (step > 1.0)
+        //     return step*dampen;
+        
+
+        if (step > 0.0)
+            return step;
+        else return 0.0001;
     }
     
 
@@ -72,7 +81,7 @@ public class ForceLayoutMod {
         Set<Vertex> verts = graph.vertexSet();
         Set<Edge> edges = graph.edgeSet();
 
-        //      Stopwatch sw = new Stopwatch();
+        Stopwatch sw = new Stopwatch();
         
         int N = verts.size();
 
@@ -83,7 +92,7 @@ public class ForceLayoutMod {
 
         // Assume that no points are assigned the exactly same positions
         for (Vertex v : verts) {
-            pos.put(v, new Vector2D(WIDTH*randGen.nextDouble()/2.0, HEIGHT*randGen.nextDouble()/2.0));
+            pos.put(v, new Vector2D(WIDTH*randGen.nextDouble(), HEIGHT*randGen.nextDouble()));
              
              // System.out.println("Intitial: " + v.getId() + " " + pos.get(v));
         }
@@ -95,15 +104,16 @@ public class ForceLayoutMod {
         // System.out.println("Finished Initialization at: " + sw.elapsedTime());
         
         double k = Math.sqrt(WIDTH*HEIGHT/N);
-        double t = 1; //Math.min(WIDTH, HEIGHT)/3.0;
+        // double t = 1; //Math.min(WIDTH, HEIGHT)/3.0;
         double step =  Math.min(WIDTH, HEIGHT)/3.0;
+        // double step = 1.0;
         double totalEnergy = 1.0/0.0; // Infinity
         double oldTotalEnergy = 0.0;
 
         Vector2D force = new Vector2D();
         Vector2D delta = new Vector2D();
         
-        while (true) {
+        for (int i = 0; i < 1000; ++i) {
             // System.out.printf("%d th round\n", i);
 
 
@@ -149,6 +159,9 @@ public class ForceLayoutMod {
 
                 Vector2D vpos = pos.get(v);
 
+
+                totalEnergy += force.mod();
+
                 
                 vpos.add(force.norm().mult(step)); // .norm().mult(Math.min(t, force.mod())));     // Math.min(disp.mod(), t)));
 
@@ -161,13 +174,15 @@ public class ForceLayoutMod {
                 // pos.put(v, new Vector2D(x, y));
                 
 
-                totalEnergy += force.mod();
             }
             
             step = cool(step, totalEnergy, oldTotalEnergy);
-
-            if (Math.abs(totalEnergy - oldTotalEnergy) < 1.0)
+            
+            if (Math.abs(totalEnergy - oldTotalEnergy) < 0.01)
                 break;
+            
+            System.out.printf("loop var = %d, Energy difference = %f; New step = %f\n", i, totalEnergy - oldTotalEnergy, step);
+
             
         }
             
@@ -180,8 +195,31 @@ public class ForceLayoutMod {
         }
         
 
-        //System.out.println("Termination: " + sw.elapsedTime());
+        // Compute the min distance b/w points
+
+        double minDist = 1.0/0;
+
+        Vertex[] vertsArray = verts.toArray(new Vertex[N]);
+        for (int i = 0; i < N; ++i)
+            for (int j = i + 1; j < N; ++j)
+                if (minDist > distance2(vertsArray[i], vertsArray[j]))
+                    minDist = distance2(vertsArray[i], vertsArray[j]);
+
+        System.out.printf("Min Distance = %f, Energy difference = %f\n", minDist, totalEnergy - oldTotalEnergy);
+
+        System.out.println("Termination: " + sw.elapsedTime());
         
+
+
+    }
+
+
+    private static double distance2(Vertex u, Vertex v)
+    {
+        double x = u.getX() - v.getX();
+        double y = u.getY() - v.getY();
+
+        return x*x + y*y;
     }
 }
 

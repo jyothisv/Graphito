@@ -8,9 +8,11 @@ import org.jgrapht.generate.*;
 import org.jgrapht.VertexFactory;
 import org.jgrapht.EdgeFactory;
 import org.jgrapht.graph.*;
-import graphito.graph.layout.ForceEnergyLayout;
+//import graphito.graph.layout.HighDimEmbed;
 
-//import graphito.graph.layout.ForceLayout;
+//import graphito.graph.layout.ForceEnergyLayout;
+// import graphito.graph.layout.GridLayout;
+import graphito.graph.layout.CircularLayout;
 
 
 public class LayoutTest {
@@ -48,8 +50,18 @@ public class LayoutTest {
         
         Graph<Vertex, Edge> graph = new SimpleGraph(new EdgeFact());
 
-        int N = Integer.parseInt(args[0]);
-        CompleteGraphGenerator graphGen = new CompleteGraphGenerator(N);
+        int N, M;
+        if (args == null) {
+            N = 100;
+            M = 100;
+        } else {
+            N = Integer.parseInt(args[0]);
+
+            M = N;
+            if (args.length > 1)
+                M = Integer.parseInt(args[1]);
+        }
+        GraphGenerator graphGen = new CompleteGraphGenerator(N);
 
         
         VertexFactory<Vertex> vfact = new VertFact();
@@ -57,13 +69,14 @@ public class LayoutTest {
         graphGen.generateGraph(graph, vfact, null);
 
 
-        ForceEnergyLayout.layout(graph);
+        CircularLayout.layout(graph);
+        // HighDimEmbed.layout(graph);
 
         for ( Vertex v: graph.vertexSet()) {
             System.out.printf("%f, %f\n", v.getX(), v.getY());
         }
 
-               System.out.println(graph);
+        //        System.out.println(graph);
 
     }
 }

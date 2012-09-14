@@ -48,6 +48,7 @@ public class Vector2D {
         return this;
     }
 
+
     public void norm(Vector2D res)
     {
         double root = this.mod();
