@@ -44,7 +44,7 @@ public class Vertex implements Shape {
 		vertexEventList.remove(VertexListener.class, v);
 	}
 
-	protected Vertex(String id) {
+	public Vertex(String id) {
 		this.id = id;
 		this.circle = new Ellipse2D.Double();
 		fillColor = Color.WHITE;

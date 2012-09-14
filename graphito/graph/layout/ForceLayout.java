@@ -2,30 +2,35 @@ package graphito.graph.layout;
 
 import graphito.graph.Vertex;
 import graphito.graph.Edge;
+import graphito.graph.layout.Vector2D;
 import org.jgrapht.Graph;
 import java.util.Random;
 import java.util.Set;
-import java.util.Hashtable;
+import java.util.HashMap;
 
 
-class ForceLayout {
+public class ForceLayout {
     private static double HEIGHT = 600;
     private static double WIDTH = 800;
-    private static double dampen = 0.8;
+    private static double dampen = 0.001;
 
 
-    private static double attraction(double k, double x)
+    private static double attraction(double k, Vector2D x)
     {
-        return x*x/k;
+        return x.mod2()/k;
     }
 
-    private static double repulsion(double k, double x)
+    private static double repulsion(double k, Vector2D x)
     {
-        return k*k/x;
+        // if (x == 0)
+        //     return 1000;
+        return k*k/(x.mod());
     }
 
 
 
+
+    // Implementation of Fruchterman & Reingold's Graph Layout algorithm.
     
     public static void layout(Graph<? extends Vertex, ? extends Edge> graph)
     {
@@ -35,41 +40,36 @@ class ForceLayout {
         int N = verts.size();
 
         Random randGen = new Random();
-        
-        // double [] velocity = double[N];
-        // Assume that velocities are initialized to zero
-        
-        // double [] xpos = xpos[N];
-        // double [] ypos = ypos[N];
 
-        Hashtable<Vertex,Double> xpos = new Hashtable<Vertex, Double>();
-        Hashtable<Vertex,Double> ypos = new Hashtable<Vertex, Double>();
+        HashMap<Vertex, Vector2D> pos = new HashMap<Vertex, Vector2D>();
 
-        Hashtable<Vertex,Double> displace = new Hashtable<Vertex, Double>();
-        
+        HashMap<Vertex, Vector2D> displace = new HashMap<Vertex, Vector2D>();
+
         // Assume that no points are assigned the exactly same positions
         for (Vertex v : verts) {
-            xpos.put(v, randGen.nextDouble());
-            ypos.put(v, randGen.nextDouble());
+            pos.put(v, new Vector2D(randGen.nextDouble(), randGen.nextDouble()));
         }
 
         double k = Math.sqrt(WIDTH*HEIGHT/N);
-        double t = Math.min(WIDTH, HEIGHT)/3;
+        double t = 1; //Math.min(WIDTH, HEIGHT)/3.0;
 
-        
-        while (true) {
-            //kineticEnergy = 0;
 
-            for (Vertex u: verts) {
+        for (int i = 0; i < 1000; ++i) {
+            //Vector2D totalDisp = new Vector2D(0.0, 0.0);
+            
+            for (Vertex v: verts) {
                 
-                displace.put(u, 0.0);
-                             
-                for (Vertex v: verts) {
+                displace.put(v, new Vector2D(0.0, 0.0));
+                
+                for (Vertex u: verts) {
                     if (v != u) {
-                        double delta = displace.get(u) - displace.get(v);
-                        double newDisp = displace.get(u) +
-                            Math.signum(delta)*repulsion(k, Math.abs(delta));
-                        displace.put(u, newDisp);
+                        Vector2D delta = pos.get(v).minus(pos.get(u));
+
+                        // double magn = delta.mod();
+                        Vector2D newDisp = displace.get(v).add(delta.norm().mult(repulsion(k, delta)));
+
+                        //System.out.println("delta = " + delta + " newDisp = " + newDisp);
+                        displace.put(v, newDisp);
                     }
                 }
             }
@@ -78,47 +78,61 @@ class ForceLayout {
                 Vertex src = e.getSource();
                 Vertex dst = e.getDest();
 
-                double delta = displace.get(src) - displace.get(dst);
+                Vector2D delta = pos.get(src).minus(pos.get(dst));
 
-                double srcDisp = displace.get(src) -
-                    Math.signum(delta)*attraction(k, Math.abs(delta));
-                double dstDisp = displace.get(dst) +
-                    Math.signum(delta)*attraction(k, Math.abs(delta));
+                // double magn = delta.mod();
+                Vector2D srcDisp = displace.get(src).minus(delta.norm().mult(attraction(k, delta)));
+
+                Vector2D dstDisp = displace.get(dst).add(delta.norm().mult(attraction(k, delta)));
+
+                //System.out.println("delta = " + delta + " srcDisp = " + srcDisp + " dstDisp = " + dstDisp);
 
                 displace.put(src, srcDisp);
                 displace.put(dst, dstDisp);
-
             }
 
 
             for (Vertex v: verts) {
-                double x = xpos.get(v);
-                double y = ypos.get(v);
-                double disp = displace.get(v);
-                    
+                Vector2D vpos = pos.get(v);
+
+                Vector2D disp = displace.get(v);
+
+                //System.out.println("Effective Disp = " + disp);
+
+                double magnVpos = vpos.mod();
+
+                // if (totalDisp < disp.mod())
+                //     totalDisp = disp.mod();
+                //  totalDisp = totalDisp.add(disp.div(disp.mod()));
+                
                 // Update x and y
-                x = x + Math.signum(disp)*Math.min(disp, t);
-                y = y + Math.signum(disp)*Math.min(disp, t);
-                    
-                x = Math.min(WIDTH/2,
-                             Math.max(-WIDTH/2, x));
-                y = Math.min(HEIGHT/2,
-                             Math.max(-HEIGHT/2, y));
+                vpos = vpos.add(disp.norm().mult(Math.min(disp.mod(), t)));     // Math.min(disp.mod(), t)));
+                
+                double x = vpos.getX(); //Math.min(WIDTH/2,   Math.max(-WIDTH/2, vpos.getX()));
+                double y = vpos.getY(); // Math.min(HEIGHT/2, Math.max(-HEIGHT/2, vpos.getY()));
+                pos.put(v, new Vector2D(x, y));
 
             }
 
-            t *= dampen;
-
-            if ( t < 0.01 )
-                break;
+            //System.out.printf("total disp = %s\n", totalDisp.toString());
             
+            // if ( totalDisp/N < t ) {
+            //     System.out.println("dampening to " + t*dampen);
+            //     t*=dampen;
+            // }
+
+            // System.out.printf("Average disp = %f\n", totalDisp);
+            
+            // if (t < 0.5)
+            //     break;
         }
+        
 
         // Change the vertex positions
 
         for (Vertex v : verts) {
             
-            v.setPos(xpos.get(v)*WIDTH, ypos.get(v)*HEIGHT, 1.0);
+            v.setPos(pos.get(v).getX(), pos.get(v).getY(), 1.0);
         }
         
             
