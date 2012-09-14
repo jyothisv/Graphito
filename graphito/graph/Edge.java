@@ -69,7 +69,7 @@ public class Edge implements VertexListener, Shape {
 		edgeEventList.remove(EdgeListener.class, v);
 	}
 
-	protected Edge(String id, Vertex source, Vertex dest) {
+	public Edge(String id, Vertex source, Vertex dest) {
 		this.id = id;
 		strokeColor = Color.BLACK;
 		this.source = source;
