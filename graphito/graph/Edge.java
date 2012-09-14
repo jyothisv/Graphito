@@ -11,6 +11,8 @@ import java.awt.geom.Point2D;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.PathIterator;
 
+import org.jgrapht.EdgeFactory;
+
 import graphito.graph.VertexListener;
 import graphito.graph.VertexStyleChangeEvent;
 import graphito.graph.VertexPosChangeEvent;
@@ -26,26 +28,44 @@ public class Edge implements VertexListener, Shape {
 	private Line2D.Double line;
 	private EventListenerList edgeEventList;
 
+	public static class Factory<V extends Vertex> implements EdgeFactory<V,Edge> {
+		private int count;
 
-	private void fireEdgeStyleChangeEvent() {
+		public Factory() {
+			count = 0;
+		}
+
+		@Override
+		public Edge createEdge(V source, V dest) {
+			return new Edge(String.format("Edge%d: (%s, %s)", count++, source.getId(), dest.getId()), source, dest);
+		}
+	}
+
+	@Override
+	public String toString() {
+		return String.format("Edge(%s: (%s, %s))", id, source.getId(), dest.getId());
+	}
+
+
+	private final void fireEdgeStyleChangeEvent() {
 		EdgeStyleChangeEvent ev = new EdgeStyleChangeEvent(this);
 		for (EdgeListener v: edgeEventList.getListeners(EdgeListener.class)) {
 			v.edgeStyleChanged(ev);
 		}
 	}
 
-	private void fireEdgePosChangeEvent() {
+	private final void fireEdgePosChangeEvent() {
 		EdgePosChangeEvent ev = new EdgePosChangeEvent(this);
 		for (EdgeListener v: edgeEventList.getListeners(EdgeListener.class)) {
 			v.edgePosChanged(ev);
 		}
 	}
 
-	public void addEdgeListner(EdgeListener v) {
+	public final void addEdgeListener(EdgeListener v) {
 		edgeEventList.add(EdgeListener.class, v);
 	}
 
-	public void removeEdgeListner(EdgeListener v) {
+	public final void removeEdgeListener(EdgeListener v) {
 		edgeEventList.remove(EdgeListener.class, v);
 	}
 
@@ -54,78 +74,87 @@ public class Edge implements VertexListener, Shape {
 		strokeColor = Color.BLACK;
 		this.source = source;
 		this.dest = dest;
-		line = new Line2D.Double(source.getX(), source.getY(), dest.getX(), dest.getY());
+		edgeEventList = new EventListenerList();
+		line = new Line2D.Double(source.getX() + source.getBounds().getWidth()/2.0, 
+			                     source.getY() + source.getBounds().getHeight()/2.0,
+			                     dest.getX() + dest.getBounds().getWidth()/2.0, 
+			                     dest.getY() + dest.getBounds().getHeight()/2.0);
+		source.addVertexListener(this);
+		dest.addVertexListener(this);
 	}
 
-	public String getId() {
+	public final String getId() {
 		return id;
 	}
 
-	public void setStrokeColor(Color c) {
+	public final void setStrokeColor(Color c) {
 		strokeColor = c;
 		fireEdgeStyleChangeEvent();
 	}
 
-	public Color getStrokeColor() {
+	public final Color getStrokeColor() {
 		return strokeColor;
 	}
 
-	public Vertex getSource() {
+	public final Vertex getSource() {
 		return source;
 	}
 
-	public Vertex getDest() {
+	public final Vertex getDest() {
 		return dest;
 	}
 
 	@Override
-	public void vertexPosChanged(VertexPosChangeEvent e) {
-		line = new Line2D.Double(source.getX(), source.getY(), dest.getX(), dest.getY());
+	public final void vertexPosChanged(VertexPosChangeEvent e) {
+		line = new Line2D.Double(source.getX() + source.getBounds().getWidth()/2.0, 
+			                     source.getY() + source.getBounds().getHeight()/2.0,
+			                     dest.getX() + dest.getBounds().getWidth()/2.0, 
+			                     dest.getY() + dest.getBounds().getHeight()/2.0);
 		fireEdgePosChangeEvent();
 	}
 
 	@Override
-	public void vertexStyleChanged(VertexStyleChangeEvent e) {
+	public final void vertexStyleChanged(VertexStyleChangeEvent e) {
 
 	}
 
-	public boolean contains(double x, double y) {
+	public final boolean contains(double x, double y) {
 		return line.contains(x,y);
 	}
 
-	public boolean contains(double x, double y, double w, double h) {
+	public final boolean contains(double x, double y, double w, double h) {
 		return line.contains(x, y, w, h);
 	}
 
-	public boolean contains(Rectangle2D r) {
+	public final boolean contains(Rectangle2D r) {
 		return line.contains(r);
 	}
 
-	public boolean contains(Point2D p) {
+	public final boolean contains(Point2D p) {
 		return line.contains(p);
 	}
 
-	public Rectangle getBounds() {
+	public final Rectangle getBounds() {
 		return line.getBounds();
 	}
 
-	public Rectangle2D getBounds2D() {
+	public final Rectangle2D getBounds2D() {
 		return line.getBounds2D();
 	}
 
-	public PathIterator getPathIterator(AffineTransform at) {
+	public final PathIterator getPathIterator(AffineTransform at) {
 		return line.getPathIterator(at);
 	}
 
-	public PathIterator getPathIterator(AffineTransform at, double flatness) {
+	public final PathIterator getPathIterator(AffineTransform at, double flatness) {
 		return line.getPathIterator(at, flatness);
 	}
 
-	public boolean intersects(double x, double y, double w, double h) {
+	public final boolean intersects(double x, double y, double w, double h) {
 		return line.intersects(x, y, w, h);
 	}
 
-	public boolean intersects(Rectangle2D r) {
+	public final boolean intersects(Rectangle2D r) {
 		return line.intersects(r);
 	}
 }

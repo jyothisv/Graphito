@@ -10,6 +10,9 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.PathIterator;
 import javax.swing.event.EventListenerList;
 import java.awt.Color;
+
+import org.jgrapht.VertexFactory;
+
 import graphito.graph.VertexListener;
 import graphito.graph.VertexStyleChangeEvent;
 import graphito.graph.VertexPosChangeEvent;
@@ -21,26 +24,44 @@ public class Vertex implements Shape {
 	private Color strokeColor;
 	private EventListenerList vertexEventList;
 
+	public static class Factory implements VertexFactory<Vertex> {
+		private int count;
 
-	private void fireVertexStyleChangeEvent() {
+		public Factory() {
+			count = 0;
+		}
+
+		@Override
+		public Vertex createVertex() {
+			return new Vertex(String.format("v%d", count++));
+		}
+	}
+
+	@Override
+	public String toString() {
+		return String.format("Vertex(%s, %f, %f, %f)", id, circle.getX(), circle.getY(), circle.getHeight());
+	}
+
+
+	private final void fireVertexStyleChangeEvent() {
 		VertexStyleChangeEvent ev = new VertexStyleChangeEvent(this);
 		for (VertexListener v: vertexEventList.getListeners(VertexListener.class)) {
 			v.vertexStyleChanged(ev);
 		}
 	}
 
-	private void fireVertexPosChangeEvent() {
+	private final void fireVertexPosChangeEvent() {
 		VertexPosChangeEvent ev = new VertexPosChangeEvent(this);
 		for (VertexListener v: vertexEventList.getListeners(VertexListener.class)) {
 			v.vertexPosChanged(ev);
 		}
 	}
 
-	public void addVertexListner(VertexListener v) {
+	public final void addVertexListener(VertexListener v) {
 		vertexEventList.add(VertexListener.class, v);
 	}
 
-	public void removeVertexListner(VertexListener v) {
+	public final void removeVertexListener(VertexListener v) {
 		vertexEventList.remove(VertexListener.class, v);
 	}
 
@@ -52,82 +73,82 @@ public class Vertex implements Shape {
 		vertexEventList = new EventListenerList();
 	}
 
-	public String getId() {
+	public final String getId() {
 		return id;
 	}
 
-	public void setStrokeColor(Color c) {
+	public final void setStrokeColor(Color c) {
 		strokeColor = c;
 		fireVertexStyleChangeEvent();
 	}
 
-	public Color getStrokeColor() {
+	public final Color getStrokeColor() {
 		return strokeColor;
 	}
 
-	public void setFillColor(Color c) {
+	public final void setFillColor(Color c) {
 		fillColor = c;
 		fireVertexStyleChangeEvent();
 	}
 
-	public Color getFillColor() {
+	public final Color getFillColor() {
 		return fillColor;
 	}
 
-	public void setPos(double x, double y, double r) {
+	public final void setPos(double x, double y, double r) {
 		circle.setFrame(x, y, r, r);
 		fireVertexPosChangeEvent();
 	}
 
-	public double getX() {
+	public final double getX() {
 		return circle.getX();
 	}
 
-	public double getY() {
+	public final double getY() {
 		return circle.getY();
 	}
 
-	public double getRadius() {
+	public final double getRadius() {
 		return circle.getHeight();
 	}
 
-	public boolean contains(double x, double y) {
+	public final boolean contains(double x, double y) {
 		return circle.contains(x,y);
 	}
 
-	public boolean contains(double x, double y, double w, double h) {
+	public final boolean contains(double x, double y, double w, double h) {
 		return circle.contains(x, y, w, h);
 	}
 
-	public boolean contains(Rectangle2D r) {
+	public final boolean contains(Rectangle2D r) {
 		return circle.contains(r);
 	}
 
-	public boolean contains(Point2D p) {
+	public final boolean contains(Point2D p) {
 		return circle.contains(p);
 	}
 
-	public Rectangle getBounds() {
+	public final Rectangle getBounds() {
 		return circle.getBounds();
 	}
 
-	public Rectangle2D getBounds2D() {
+	public final Rectangle2D getBounds2D() {
 		return circle.getBounds2D();
 	}
 
-	public PathIterator getPathIterator(AffineTransform at) {
+	public final PathIterator getPathIterator(AffineTransform at) {
 		return circle.getPathIterator(at);
 	}
 
-	public PathIterator getPathIterator(AffineTransform at, double flatness) {
+	public final PathIterator getPathIterator(AffineTransform at, double flatness) {
 		return circle.getPathIterator(at, flatness);
 	}
 
-	public boolean intersects(double x, double y, double w, double h) {
+	public final boolean intersects(double x, double y, double w, double h) {
 		return circle.intersects(x, y, w, h);
 	}
 
-	public boolean intersects(Rectangle2D r) {
+	public final boolean intersects(Rectangle2D r) {
 		return circle.intersects(r);
 	}
 }
