@@ -1,5 +1,7 @@
 package graphito.graph.layout;
 
+import graphito.graph.layout.Layouter;
+
 import graphito.graph.Vertex;
 import graphito.graph.Edge;
 import graphito.graph.layout.Vector2D;
@@ -8,48 +10,46 @@ import java.util.Random;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.HashMap;
-import graphito.graph.layout.Stopwatch;
 
+public class ForceEnergyLayout implements Layouter {
+    private double HEIGHT;
+    private double WIDTH;
+    private double dampen;
+    private int progress;
 
-public class ForceEnergyLayout {
-    private static double HEIGHT = 1000;
-    private static double WIDTH = 1000;
-    private static double dampen = 0.9;
+    public ForceEnergyLayout() {
+        HEIGHT = 600;
+        WIDTH = 800;
+        dampen = 0.9;
+        progress = 0;
+    }
 
-    private static double attraction(double k, Vector2D x)
+    private double attraction(double k, Vector2D x)
     {
         return x.mod2()/(k*k);
-        // return 0;
     }
 
-    private static double repulsion(double k, Vector2D x)
+    private double repulsion(double k, Vector2D x)
     {
-        
-        return -k*k/(x.mod());
+        return -k*k/(x.mod()) * 10.0;
     }
 
+    // private Vertex[] adjacent(Graph<Vertex, Edge> graph, Vertex v)
+    // {
+    //     Vertex[] neigh = new Vertex[graph.edgesOf(v).size()];
 
-    private static Vertex[] adjacent(Graph<Vertex, Edge> graph, Vertex v)
-    {
-        Vertex[] neigh = new Vertex[graph.edgesOf(v).size()];
+    //     int i = 0;
+    //     for (Edge e: graph.edgesOf(v)) {
+    //         Vertex src = e.getSource();
+    //         if (src != v)
+    //             neigh[i++] = src;
+    //         else neigh[i++] = e.getDest();
+    //     }
 
-        int i = 0;
-        for (Edge e: graph.edgesOf(v)) {
-            Vertex src = e.getSource();
-            if (src != v)
-                neigh[i++] = src;
-            else neigh[i++] = e.getDest();
-        }
+    //     return neigh;
+    // }
 
-        return neigh;
-    }
-
-
-
-    static int progress = 0;
-    
-
-    private static double cool(double step, double tot, double oldTot)
+    private double cool(double step, double tot, double oldTot)
     {
         if (tot < oldTot) {
             ++progress;
@@ -75,19 +75,19 @@ public class ForceEnergyLayout {
 
 
     // Implementation of Fruchterman & Reingold's Graph Layout algorithm.
-    
-    public static void layout(Graph<Vertex, Edge> graph)
+
+    @Override
+    public <V extends Vertex, E extends Edge> void layout(Graph<V, E> graph)
     {
-        Set<Vertex> verts = graph.vertexSet();
-        Set<Edge> edges = graph.edgeSet();
+        Set<V> verts = graph.vertexSet();
+        Set<E> edges = graph.edgeSet();
 
         Stopwatch sw = new Stopwatch();
         
         int N = verts.size();
 
         Random randGen = new Random();
-
-        HashMap<Vertex, Vector2D> pos = new HashMap<Vertex, Vector2D>();
+        HashMap<V, Vector2D> pos = new HashMap<V, Vector2D>();
 
 
         // Assume that no points are assigned the exactly same positions
@@ -124,7 +124,7 @@ public class ForceEnergyLayout {
             
             totalEnergy = 0.0;
             
-            for (Vertex v: verts) {
+            for (V v: verts) {
 
                 // force = (0, 0)
                 force.zero();
@@ -147,7 +147,7 @@ public class ForceEnergyLayout {
                 }
 
                 
-                for (Vertex u: verts) {
+                for (V u: verts) {
                     if (v != u) {
                         pos.get(u).minus(pos.get(v), delta);
                         
@@ -181,17 +181,36 @@ public class ForceEnergyLayout {
             if (Math.abs(totalEnergy - oldTotalEnergy) < 0.01)
                 break;
             
-            System.out.printf("loop var = %d, Energy difference = %f; New step = %f\n", i, totalEnergy - oldTotalEnergy, step);
+            // System.out.printf("loop var = %d, Energy difference = %f; New step = %f\n", i, totalEnergy - oldTotalEnergy, step);
 
             
         }
             
 
-        // Change the vertex positions
+        double MinX = 1.0/0, MinY = 1.0/0;
+        // double MaxX = 1.0/0, MaxY = 1.0/0;
+        // Determine MinX, MinY, MaxX and MaxY
+        Vector2D p;
+        for (V v: verts) {
+            p = pos.get(v);
+            if (p.getX() < MinX)
+                MinX = p.getX();
+            // else if (p.getX() > MaxX)
+            //     MaxX = p.getX();
 
-        for (Vertex v : verts) {
-            
-            v.setPos(pos.get(v).getX(), pos.get(v).getY(), 1.0);
+            if (p.getY() < MinY)
+                MinY = p.getY();
+            // else if (p.getY() > MaxY)
+            //     MaxY = p.getY();
+        }
+                
+        
+        // Change the vertex positions
+        MinX = Math.max(0.0, -MinX);
+        MinY = Math.max(0.0, -MinY);
+        
+        for (V v : verts) {           
+            v.setPos(pos.get(v).getX() + MinX, pos.get(v).getY() + MinY, 3.0);
         }
         
 
@@ -205,9 +224,9 @@ public class ForceEnergyLayout {
                 if (minDist > distance2(vertsArray[i], vertsArray[j]))
                     minDist = distance2(vertsArray[i], vertsArray[j]);
 
-        System.out.printf("Min Distance = %f, Energy difference = %f\n", minDist, totalEnergy - oldTotalEnergy);
+        //System.out.printf("Min Distance = %f, Energy difference = %f\n", minDist, totalEnergy - oldTotalEnergy);
 
-        System.out.println("Termination: " + sw.elapsedTime());
+        // System.out.println("Termination: " + sw.elapsedTime());
         
 
 
