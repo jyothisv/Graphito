@@ -1,5 +1,7 @@
 package graphito.graph.layout;
 
+import graphito.graph.layout.Layouter;
+
 import graphito.graph.Vertex;
 import graphito.graph.Edge;
 import graphito.graph.layout.Vector2D;
@@ -8,46 +10,46 @@ import java.util.Random;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.HashMap;
-// import graphito.graph.layout.Stopwatch;
 
+public class ForceEnergyLayout implements Layouter {
+    private double HEIGHT;
+    private double WIDTH;
+    private double dampen;
+    private int progress;
 
-public class ForceLayoutMod {
-    private static double HEIGHT = 600;
-    private static double WIDTH = 800;
-    private static double dampen = 0.9;
+    public ForceEnergyLayout() {
+        HEIGHT = 600;
+        WIDTH = 800;
+        dampen = 0.9;
+        progress = 0;
+    }
 
-    private static double attraction(double k, Vector2D x)
+    private double attraction(double k, Vector2D x)
     {
         return x.mod2()/k;
     }
 
-    private static double repulsion(double k, Vector2D x)
+    private double repulsion(double k, Vector2D x)
     {
         return -k*k/(x.mod());
     }
 
+    // private Vertex[] adjacent(Graph<Vertex, Edge> graph, Vertex v)
+    // {
+    //     Vertex[] neigh = new Vertex[graph.edgesOf(v).size()];
 
-    private static Vertex[] adjacent(Graph<Vertex, Edge> graph, Vertex v)
-    {
-        Vertex[] neigh = new Vertex[graph.edgesOf(v).size()];
+    //     int i = 0;
+    //     for (Edge e: graph.edgesOf(v)) {
+    //         Vertex src = e.getSource();
+    //         if (src != v)
+    //             neigh[i++] = src;
+    //         else neigh[i++] = e.getDest();
+    //     }
 
-        int i = 0;
-        for (Edge e: graph.edgesOf(v)) {
-            Vertex src = e.getSource();
-            if (src != v)
-                neigh[i++] = src;
-            else neigh[i++] = e.getDest();
-        }
+    //     return neigh;
+    // }
 
-        return neigh;
-    }
-
-
-
-    static int progress = 0;
-    
-
-    private static double cool(double step, double tot, double oldTot)
+    private double cool(double step, double tot, double oldTot)
     {
         if (tot < oldTot) {
             ++progress;
@@ -66,23 +68,23 @@ public class ForceLayoutMod {
 
 
     // Implementation of Fruchterman & Reingold's Graph Layout algorithm.
-    
-    public static void layout(Graph<Vertex, Edge> graph)
+
+    @Override
+    public <V extends Vertex, E extends Edge> void layout(Graph<V, E> graph)
     {
-        Set<Vertex> verts = graph.vertexSet();
-        Set<Edge> edges = graph.edgeSet();
+        Set<V> verts = graph.vertexSet();
+        Set<E> edges = graph.edgeSet();
 
         //      Stopwatch sw = new Stopwatch();
         
         int N = verts.size();
 
         Random randGen = new Random();
-
-        HashMap<Vertex, Vector2D> pos = new HashMap<Vertex, Vector2D>();
+        HashMap<V, Vector2D> pos = new HashMap<V, Vector2D>();
 
 
         // Assume that no points are assigned the exactly same positions
-        for (Vertex v : verts) {
+        for (V v : verts) {
             pos.put(v, new Vector2D(WIDTH*randGen.nextDouble()/2.0, HEIGHT*randGen.nextDouble()/2.0));
              
              // System.out.println("Intitial: " + v.getId() + " " + pos.get(v));
@@ -114,7 +116,7 @@ public class ForceLayoutMod {
             
             totalEnergy = 0.0;
             
-            for (Vertex v: verts) {
+            for (V v: verts) {
 
                 // force = (0, 0)
                 force.zero();
@@ -137,7 +139,7 @@ public class ForceLayoutMod {
                 }
 
                 
-                for (Vertex u: verts) {
+                for (V u: verts) {
                     if (v != u) {
                         pos.get(u).minus(pos.get(v), delta);
                         
@@ -174,8 +176,7 @@ public class ForceLayoutMod {
 
         // Change the vertex positions
 
-        for (Vertex v : verts) {
-            
+        for (V v : verts) {           
             v.setPos(pos.get(v).getX(), pos.get(v).getY(), 1.0);
         }
         
